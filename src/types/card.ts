@@ -1,5 +1,7 @@
 export type ReviewFeedback = 'forgot' | 'vague' | 'remembered';
 
+export type ReviewAdjustType = 'tomorrow' | '3days' | 'nextWeek' | 'custom' | 'skip';
+
 export interface ReviewHistoryItem {
   id: string;
   cardId: string;
@@ -8,6 +10,8 @@ export interface ReviewHistoryItem {
   masteryAfter: number;
   reviewedAt: number;
   nextReviewAt: number;
+  adjusted?: boolean;
+  adjustReason?: string;
 }
 
 export interface Card {
@@ -17,6 +21,7 @@ export interface Card {
   sourceType?: 'book' | 'course' | 'article' | 'other';
   themes: string[];
   relatedCardIds: string[];
+  relatedNoteIds: string[];
   isFavorite: boolean;
   masteryLevel: 1 | 2 | 3 | 4 | 5;
   reviewCount: number;
@@ -66,6 +71,7 @@ export interface ThemeNote {
   title: string;
   content: string;
   cardIds: string[];
+  linkToCards: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -81,4 +87,30 @@ export interface WeeklyStats {
   totalReviewed: number;
   dailyStats: DailyStats[];
   topThemes: { name: string; count: number }[];
+}
+
+export interface CalendarDayData {
+  date: string;
+  timestamp: number;
+  totalScheduled: number;
+  completed: number;
+  overdue: number;
+  cardIds: string[];
+  completedCardIds: string[];
+}
+
+export interface CalendarWeekData {
+  weekStart: string;
+  weekEnd: string;
+  days: CalendarDayData[];
+  totalScheduled: number;
+  totalCompleted: number;
+}
+
+export interface CalendarMonthData {
+  year: number;
+  month: number;
+  weeks: CalendarWeekData[];
+  totalScheduled: number;
+  totalCompleted: number;
 }

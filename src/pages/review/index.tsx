@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
 import Taro, { usePullDownRefresh } from '@tarojs/taro';
 import styles from './index.module.scss';
@@ -7,7 +7,7 @@ import { useCards } from '@/store/CardContext';
 import CardItem from '@/components/CardItem';
 import ThemeTag from '@/components/ThemeTag';
 import EmptyState from '@/components/EmptyState';
-import { ReviewFeedback, ReviewGroup, ReviewSessionSummary } from '@/types/card';
+import { ReviewFeedback, ReviewGroup, ReviewSessionSummary, ReviewAdjustType, CalendarDayData, CalendarWeekData } from '@/types/card';
 
 const masteryEmojis = ['😕', '🤔', '🙂', '😊', '🤩'];
 const masteryLabels = ['初识', '了解', '熟悉', '掌握', '精通'];
@@ -56,15 +56,19 @@ const ReviewPage: React.FC = () => {
     reviewQueue,
     markReviewed,
     markMastery,
+    adjustNextReview,
     getRandomCard,
     getAllReviewGroups,
     getReviewGroupCards,
     getCardReviewGroup,
     generateSessionSummary,
     getOrderedReviewCards,
+    getCalendarWeekData,
+    getCalendarDayData,
   } = useCards();
 
-  const [mode, setMode] = useState<'list' | 'card'>('list');
+  const [mode, setMode] = useState<'list' | 'card' | 'calendar'>('list');
+  const [calendarMode, setCalendarMode] = useState<'week' | 'month'>('week');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
@@ -82,6 +86,18 @@ const ReviewPage: React.FC = () => {
     before: number;
     after: number;
   }>>([]);
+  const [showAdjustMenu, setShowAdjustMenu] = useState(false);
+  const [adjustCardId, setAdjustCardId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const [calendarWeekData, setCalendarWeekData] = useState<CalendarWeekData | null>(null);
+
+  useEffect(() => {
+    if (mode === 'calendar') {
+      const weekData = getCalendarWeekData();
+      setCalendarWeekData(weekData);
+    }
+  }, [mode, getCalendarWeekData, cards]);
 
   const reviewedCount = useMemo(() => {
     return reviewQueue.filter(r => r.isReviewed).length;

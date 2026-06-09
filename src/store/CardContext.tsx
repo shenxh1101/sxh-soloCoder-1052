@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import Taro from '@tarojs/taro';
-import { Card, Theme, ReviewQueueItem, WeeklyStats, DailyStats, ReviewFeedback, ReviewGroup, ReviewSessionSummary, ThemeNote, ReviewHistoryItem } from '@/types/card';
+import { Card, Theme, ReviewQueueItem, WeeklyStats, DailyStats, ReviewFeedback, ReviewGroup, ReviewSessionSummary, ThemeNote, ReviewHistoryItem, ReviewAdjustType, CalendarDayData, CalendarWeekData, CalendarMonthData } from '@/types/card';
 import { mockCards, mockThemes } from '@/data/mockCards';
 import { getWeekDates } from '@/utils/date';
 
@@ -18,16 +18,18 @@ interface CardContextType {
   themeNotes: ThemeNote[];
   searchKeyword: string;
   setSearchKeyword: (keyword: string) => void;
-  addCard: (card: Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'reviewCount' | 'masteryLevel' | 'reviewHistory'>) => void;
+  addCard: (card: Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'reviewCount' | 'masteryLevel' | 'reviewHistory' | 'relatedNoteIds'>) => void;
   updateCard: (id: string, updates: Partial<Card>) => void;
   deleteCard: (id: string) => void;
   toggleFavorite: (id: string) => void;
   markMastery: (id: string, level: 1 | 2 | 3 | 4 | 5) => void;
   markReviewed: (cardId: string, feedback?: ReviewFeedback) => { masteryBefore: number; masteryAfter: number; nextReviewAt: number };
+  adjustNextReview: (cardId: string, adjustType: ReviewAdjustType, customDate?: number, reason?: string) => void;
   addTheme: (theme: Omit<Theme, 'cardCount'>) => void;
   getRandomCard: () => Card | null;
   getWeeklyStats: () => WeeklyStats;
   getRelatedCards: (cardId: string) => Card[];
+  getCardNotes: (cardId: string) => ThemeNote[];
   filteredCards: Card[];
   favoriteCards: Card[];
   pendingReviewCards: Card[];
@@ -37,12 +39,15 @@ interface CardContextType {
   getAllReviewGroups: () => { group: ReviewGroup; label: string; count: number }[];
   getCardReviewGroup: (card: Card) => ReviewGroup;
   calculateNextReview: (feedback: ReviewFeedback, currentMastery: number, lastReviewAt?: number) => number;
-  createThemeNote: (themeName: string, cardIds: string[], groupBy?: 'source' | 'mastery') => ThemeNote;
+  createThemeNote: (themeName: string, cardIds: string[], groupBy?: 'source' | 'mastery', linkToCards?: boolean) => ThemeNote;
   updateThemeNote: (noteId: string, updates: Partial<ThemeNote>) => void;
   deleteThemeNote: (noteId: string) => void;
   getThemeNotes: (themeName?: string) => ThemeNote[];
   generateSessionSummary: (reviewedCardIds: string[]) => ReviewSessionSummary;
-  getOrderedReviewCards: () => Card[];
+  getOrderedReviewCards: (startCardId?: string) => Card[];
+  getCalendarDayData: (date: string) => CalendarDayData;
+  getCalendarWeekData: (baseDate?: number) => CalendarWeekData;
+  getCalendarMonthData: (year?: number, month?: number) => CalendarMonthData;
 }
 
 const CardContext = createContext<CardContextType | undefined>(undefined);
@@ -76,11 +81,13 @@ function getInitialReviewQueue(cards: Card[]): ReviewQueueItem[] {
   }));
 }
 
-function cleanupInvalidRelations(cards: Card[]): Card[] {
+function cleanupInvalidRelations(cards: Card[], notes: ThemeNote[]): Card[] {
   const validCardIds = new Set(cards.map(c => c.id));
+  const validNoteIds = new Set(notes.map(n => n.id));
   return cards.map(card => ({
     ...card,
     relatedCardIds: card.relatedCardIds.filter(id => validCardIds.has(id)),
+    relatedNoteIds: (card.relatedNoteIds || []).filter(id => validNoteIds.has(id)),
   }));
 }
 
@@ -117,15 +124,19 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!card.nextReviewAt) {
         return {
           ...card,
+          relatedNoteIds: card.relatedNoteIds || [],
           nextReviewAt: card.lastReviewAt
             ? card.lastReviewAt + 86400000
             : card.createdAt + 86400000,
         };
       }
-      return card;
+      return {
+        ...card,
+        relatedNoteIds: card.relatedNoteIds || [],
+      };
     });
 
-    const cleanedCards = cleanupInvalidRelations(cardsWithNextReview);
+    const cleanedCards = cleanupInvalidRelations(cardsWithNextReview, savedNotes);
     const initialQueue = savedQueue || getInitialReviewQueue(cleanedCards);
 
     setCards(cleanedCards);
@@ -163,16 +174,17 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const now = Date.now();
     const todayStart = new Date().setHours(0, 0, 0, 0);
     const tomorrowStart = todayStart + 86400000;
-    const day3Start = todayStart + 3 * 86400000;
-    const day7Start = todayStart + 7 * 86400000;
+    const day2Start = todayStart + 2 * 86400000;
+    const day5Start = todayStart + 5 * 86400000;
+    const day8Start = todayStart + 8 * 86400000;
 
     const scheduledAt = card.nextReviewAt || card.createdAt + 86400000;
 
     if (scheduledAt < todayStart) return 'overdue';
     if (scheduledAt < tomorrowStart) return 'today';
-    if (scheduledAt < day3Start) return 'tomorrow';
-    if (scheduledAt < day7Start) return 'next3days';
-    if (scheduledAt < day7Start + 14 * 86400000) return 'next7days';
+    if (scheduledAt < day2Start) return 'tomorrow';
+    if (scheduledAt < day5Start) return 'next3days';
+    if (scheduledAt < day8Start) return 'next7days';
     return 'later';
   }, []);
 
@@ -206,15 +218,26 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return baseTime + days * 86400000;
   }, []);
 
-  const getOrderedReviewCards = useCallback((): Card[] => {
+  const getOrderedReviewCards = useCallback((startCardId?: string): Card[] => {
     const pendingIds = reviewQueue.filter(r => !r.isReviewed).map(r => r.cardId);
-    return cards
+    let orderedCards = cards
       .filter(c => pendingIds.includes(c.id))
       .sort((a, b) => {
         const aScheduled = a.nextReviewAt || a.createdAt;
         const bScheduled = b.nextReviewAt || b.createdAt;
         return aScheduled - bScheduled;
       });
+
+    if (startCardId) {
+      const startIndex = orderedCards.findIndex(c => c.id === startCardId);
+      if (startIndex > 0) {
+        const beforeStart = orderedCards.slice(0, startIndex);
+        const fromStart = orderedCards.slice(startIndex);
+        orderedCards = [...fromStart, ...beforeStart];
+      }
+    }
+
+    return orderedCards;
   }, [cards, reviewQueue]);
 
   const recalculateThemeCardCounts = useCallback((currentCards: Card[], currentThemes: Theme[]): Theme[] => {
@@ -331,6 +354,63 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { masteryBefore, masteryAfter, nextReviewAt };
   }, [calculateNextReview]);
 
+  const adjustNextReview = useCallback((cardId: string, adjustType: ReviewAdjustType, customDate?: number, reason?: string) => {
+    const now = Date.now();
+    const todayStart = new Date().setHours(0, 0, 0, 0);
+
+    let newNextReviewAt = now + 86400000;
+
+    switch (adjustType) {
+      case 'tomorrow':
+        newNextReviewAt = todayStart + 2 * 86400000 - 1;
+        break;
+      case '3days':
+        newNextReviewAt = todayStart + 3 * 86400000;
+        break;
+      case 'nextWeek':
+        newNextReviewAt = todayStart + 7 * 86400000;
+        break;
+      case 'skip':
+        newNextReviewAt = todayStart + 86400000;
+        break;
+      case 'custom':
+        if (customDate) {
+          newNextReviewAt = customDate;
+        }
+        break;
+    }
+
+    setCards(prev => prev.map(card => {
+      if (card.id === cardId) {
+        const historyItem: ReviewHistoryItem = {
+          id: `hist_${now}_${Math.random().toString(36).substr(2, 9)}`,
+          cardId,
+          feedback: 'vague',
+          masteryBefore: card.masteryLevel,
+          masteryAfter: card.masteryLevel,
+          reviewedAt: now,
+          nextReviewAt: newNextReviewAt,
+          adjusted: true,
+          adjustReason: reason || adjustType,
+        };
+
+        return {
+          ...card,
+          nextReviewAt: newNextReviewAt,
+          updatedAt: now,
+          reviewHistory: [...(card.reviewHistory || []), historyItem],
+        };
+      }
+      return card;
+    }));
+
+    setReviewQueue(prev => prev.map(item =>
+      item.cardId === cardId ? { ...item, scheduledAt: newNextReviewAt } : item
+    ));
+
+    console.log('[CardContext] 调整复习时间:', cardId, '类型:', adjustType, '新时间:', new Date(newNextReviewAt).toLocaleString());
+  }, []);
+
   const addTheme = useCallback((themeData: Omit<Theme, 'cardCount'>) => {
     const newTheme: Theme = {
       ...themeData,
@@ -352,6 +432,12 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!card || !card.relatedCardIds.length) return [];
     return cards.filter(c => card.relatedCardIds.includes(c.id));
   }, [cards]);
+
+  const getCardNotes = useCallback((cardId: string): ThemeNote[] => {
+    const card = cards.find(c => c.id === cardId);
+    if (!card || !card.relatedNoteIds || card.relatedNoteIds.length === 0) return [];
+    return themeNotes.filter(n => card.relatedNoteIds!.includes(n.id));
+  }, [cards, themeNotes]);
 
   const generateSessionSummary = useCallback((reviewedCardIds: string[]): ReviewSessionSummary => {
     const reviewedCards = cards.filter(c => reviewedCardIds.includes(c.id));
@@ -387,7 +473,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [cards]);
 
-  const createThemeNote = useCallback((themeName: string, cardIds: string[], groupBy: 'source' | 'mastery' = 'mastery'): ThemeNote => {
+  const createThemeNote = useCallback((themeName: string, cardIds: string[], groupBy: 'source' | 'mastery' = 'mastery', linkToCards: boolean = false): ThemeNote => {
     const selectedCards = cards.filter(c => cardIds.includes(c.id));
     const now = Date.now();
 
@@ -433,26 +519,84 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title,
       content,
       cardIds,
+      linkToCards,
       createdAt: now,
       updatedAt: now,
     };
 
     setThemeNotes(prev => [...prev, newNote]);
-    console.log('[CardContext] 创建主题笔记:', newNote.id);
+
+    if (linkToCards) {
+      setCards(prev => prev.map(card => {
+        if (cardIds.includes(card.id)) {
+          return {
+            ...card,
+            relatedNoteIds: [...(card.relatedNoteIds || []), newNote.id],
+            updatedAt: now,
+          };
+        }
+        return card;
+      }));
+    }
+
+    console.log('[CardContext] 创建主题笔记:', newNote.id, '关联卡片:', linkToCards);
     return newNote;
   }, [cards]);
 
   const updateThemeNote = useCallback((noteId: string, updates: Partial<ThemeNote>) => {
+    const now = Date.now();
+    const existingNote = themeNotes.find(n => n.id === noteId);
+
     setThemeNotes(prev => prev.map(note =>
-      note.id === noteId ? { ...note, ...updates, updatedAt: Date.now() } : note
+      note.id === noteId ? { ...note, ...updates, updatedAt: now } : note
     ));
+
+    if (existingNote && updates.linkToCards !== undefined && updates.linkToCards !== existingNote.linkToCards) {
+      setCards(prev => prev.map(card => {
+        if (existingNote.cardIds.includes(card.id)) {
+          const currentNoteIds = card.relatedNoteIds || [];
+          if (updates.linkToCards) {
+            return {
+              ...card,
+              relatedNoteIds: [...currentNoteIds, noteId],
+              updatedAt: now,
+            };
+          } else {
+            return {
+              ...card,
+              relatedNoteIds: currentNoteIds.filter(id => id !== noteId),
+              updatedAt: now,
+            };
+          }
+        }
+        return card;
+      }));
+    }
+
     console.log('[CardContext] 更新主题笔记:', noteId);
-  }, []);
+  }, [themeNotes]);
 
   const deleteThemeNote = useCallback((noteId: string) => {
+    const now = Date.now();
+    const existingNote = themeNotes.find(n => n.id === noteId);
+
     setThemeNotes(prev => prev.filter(note => note.id !== noteId));
+
+    if (existingNote && existingNote.linkToCards) {
+      setCards(prev => prev.map(card => {
+        if (existingNote.cardIds.includes(card.id)) {
+          return {
+            ...card,
+            relatedNoteIds: (card.relatedNoteIds || []).filter(id => id !== noteId),
+            updatedAt: now,
+          };
+        }
+        return card;
+      }));
+    }
+
     console.log('[CardContext] 删除主题笔记:', noteId);
-  }, []);
+  }, [themeNotes]);
 
   const getThemeNotes = useCallback((themeName?: string): ThemeNote[] => {
     if (!themeName) return themeNotes;
@@ -494,6 +638,129 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [cards]);
 
+  const formatDateKey = (timestamp: number): string => {
+    const d = new Date(timestamp);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const getStartOfDay = (timestamp: number): number => {
+    return new Date(timestamp).setHours(0, 0, 0, 0);
+  };
+
+  const getEndOfDay = (timestamp: number): number => {
+    return new Date(timestamp).setHours(23, 59, 59, 999);
+  };
+
+  const getCalendarDayData = useCallback((date: string): CalendarDayData => {
+    const todayStart = getStartOfDay(Date.now());
+    const dateParts = date.split('-');
+    const targetDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+    const dayStart = targetDate.setHours(0, 0, 0, 0);
+    const dayEnd = targetDate.setHours(23, 59, 59, 999);
+
+    const dayCards = cards.filter(card => {
+      const scheduled = card.nextReviewAt || card.createdAt + 86400000;
+      return scheduled >= dayStart && scheduled <= dayEnd;
+    });
+
+    const completedCardIds = dayCards
+      .filter(card => {
+        const lastHistory = card.reviewHistory?.[card.reviewHistory.length - 1];
+        return lastHistory && lastHistory.reviewedAt >= dayStart && lastHistory.reviewedAt <= dayEnd && !lastHistory.adjusted;
+      })
+      .map(card => card.id);
+
+    const overdueCount = dayCards.filter(card => {
+      const scheduled = card.nextReviewAt || card.createdAt + 86400000;
+      return scheduled < todayStart && !completedCardIds.includes(card.id);
+    }).length;
+
+    return {
+      date,
+      timestamp: dayStart,
+      totalScheduled: dayCards.length,
+      completed: completedCardIds.length,
+      overdue: overdueCount,
+      cardIds: dayCards.map(card => card.id),
+      completedCardIds,
+    };
+  }, [cards]);
+
+  const getCalendarWeekData = useCallback((baseDate?: number): CalendarWeekData => {
+    const now = baseDate || Date.now();
+    const currentDate = new Date(now);
+    const dayOfWeek = currentDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() + mondayOffset);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    const days: CalendarDayData[] = [];
+    let totalScheduled = 0;
+    let totalCompleted = 0;
+
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + i);
+      const dateKey = formatDateKey(dayDate.getTime());
+      const dayData = getCalendarDayData(dateKey);
+      days.push(dayData);
+      totalScheduled += dayData.totalScheduled;
+      totalCompleted += dayData.completed;
+    }
+
+    return {
+      weekStart: formatDateKey(weekStart.getTime()),
+      weekEnd: formatDateKey(weekEnd.getTime()),
+      days,
+      totalScheduled,
+      totalCompleted,
+    };
+  }, [cards, getCalendarDayData]);
+
+  const getCalendarMonthData = useCallback((year?: number, month?: number): CalendarMonthData => {
+    const now = new Date();
+    const targetYear = year || now.getFullYear();
+    const targetMonth = month !== undefined ? month : now.getMonth();
+
+    const firstDay = new Date(targetYear, targetMonth, 1);
+    const lastDay = new Date(targetYear, targetMonth + 1, 0);
+
+    const firstDayOfWeek = firstDay.getDay();
+    const mondayOffset = firstDayOfWeek === 0 ? -6 : 1 - firstDayOfWeek;
+    const calendarStart = new Date(firstDay);
+    calendarStart.setDate(firstDay.getDate() + mondayOffset);
+
+    const weeks: CalendarWeekData[] = [];
+    let totalScheduled = 0;
+    let totalCompleted = 0;
+
+    for (let weekIndex = 0; weekIndex < 6; weekIndex++) {
+      const weekBase = new Date(calendarStart);
+      weekBase.setDate(calendarStart.getDate() + weekIndex * 7);
+      const weekData = getCalendarWeekData(weekBase.getTime());
+      weeks.push(weekData);
+      totalScheduled += weekData.totalScheduled;
+      totalCompleted += weekData.totalCompleted;
+
+      if (weekBase.getTime() > lastDay.getTime()) {
+        break;
+      }
+    }
+
+    return {
+      year: targetYear,
+      month: targetMonth,
+      weeks,
+      totalScheduled,
+      totalCompleted,
+    };
+  }, [cards, getCalendarWeekData]);
+
   const filteredCards = useMemo(() => {
     if (!searchKeyword.trim()) return cards;
     const keyword = searchKeyword.toLowerCase();
@@ -523,10 +790,12 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toggleFavorite,
     markMastery,
     markReviewed,
+    adjustNextReview,
     addTheme,
     getRandomCard,
     getWeeklyStats,
     getRelatedCards,
+    getCardNotes,
     filteredCards,
     favoriteCards,
     pendingReviewCards,
@@ -542,6 +811,9 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getThemeNotes,
     generateSessionSummary,
     getOrderedReviewCards,
+    getCalendarDayData,
+    getCalendarWeekData,
+    getCalendarMonthData,
   };
 
   return (
