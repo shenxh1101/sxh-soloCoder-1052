@@ -49,6 +49,35 @@ function formatNextReviewTime(timestamp: number): string {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
+function formatDateLabel(dateStr: string): string {
+  const parts = dateStr.split('-');
+  return `${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+}
+
+function formatWeekday(dateStr: string): string {
+  const date = new Date(dateStr);
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  return weekdays[date.getDay()];
+}
+
+function isToday(dateStr: string): boolean {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  return dateStr === todayStr;
+}
+
+const adjustOptions: Array<{
+  key: ReviewAdjustType;
+  label: string;
+  emoji: string;
+  description: string;
+}> = [
+  { key: 'tomorrow', label: '明天', emoji: '📅', description: '改到明天复习' },
+  { key: '3days', label: '三天后', emoji: '📆', description: '改到三天后复习' },
+  { key: 'nextWeek', label: '下周', emoji: '🗓️', description: '改到下周复习' },
+  { key: 'skip', label: '跳过今天', emoji: '⏭️', description: '今天先不复习' },
+];
+
 const ReviewPage: React.FC = () => {
   const {
     cards,
@@ -129,31 +158,43 @@ const ReviewPage: React.FC = () => {
     }, 1000);
   });
 
-  const startReview = (group?: ReviewGroup) => {
+  const startReview = (group?: ReviewGroup, startCardId?: string) => {
     let cardsToReview: string[] = [];
     if (group) {
       cardsToReview = getReviewGroupCards(group).map(c => c.id);
     } else if (activeGroup !== 'all') {
       cardsToReview = getReviewGroupCards(activeGroup).map(c => c.id);
     } else {
-      cardsToReview = getOrderedReviewCards().map(c => c.id);
+      cardsToReview = getOrderedReviewCards(startCardId).map(c => c.id);
+    }
+
+    if (startCardId && group) {
+      const groupCards = getReviewGroupCards(group);
+      const startIndex = groupCards.findIndex(c => c.id === startCardId);
+      if (startIndex > 0) {
+        const beforeStart = groupCards.slice(0, startIndex).map(c => c.id);
+        const fromStart = groupCards.slice(startIndex).map(c => c.id);
+        cardsToReview = [...fromStart, ...beforeStart];
+      }
     }
 
     if (cardsToReview.length === 0) {
       Taro.showToast({ title: '暂无待复习卡片', icon: 'none' });
       return;
     }
+
+    const actualStartIndex = startCardId ? cardsToReview.indexOf(startCardId) : 0;
     setReviewSessionCards(cardsToReview);
     setReviewedInSession(new Set());
     setMasteryChangesInSession([]);
     setSingleCardMode(false);
     setMode('card');
-    setCurrentIndex(0);
+    setCurrentIndex(actualStartIndex >= 0 ? actualStartIndex : 0);
     setIsFlipped(false);
     setSelectedMastery(null);
     setSelectedFeedback(null);
     setSessionSummary(null);
-    console.log('[Review] 开始复习，共', cardsToReview.length, '张卡片');
+    console.log('[Review] 开始复习，共', cardsToReview.length, '张卡片，从第', actualStartIndex + 1, '张开始');
   };
 
   const startSingleCardReview = (cardId: string) => {
@@ -385,19 +426,9 @@ const ReviewPage: React.FC = () => {
                       showActions
                       onReview={() => {
                         if (activeGroup !== 'all') {
-                          const groupCards = getReviewGroupCards(activeGroup);
-                          const groupIndex = groupCards.findIndex(c => c.id === card.id);
-                          if (groupIndex >= 0) {
-                            setCurrentIndex(groupIndex);
-                            startReview(activeGroup);
-                          }
+                          startReview(activeGroup, card.id);
                         } else {
-                          const allCards = getOrderedReviewCards();
-                          const allIndex = allCards.findIndex(c => c.id === card.id);
-                          if (allIndex >= 0) {
-                            setCurrentIndex(allIndex);
-                            startReview();
-                          }
+                          startReview(undefined, card.id);
                         }
                       }}
                     />
