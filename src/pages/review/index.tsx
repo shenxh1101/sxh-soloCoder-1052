@@ -28,15 +28,22 @@ const ReviewPage: React.FC = () => {
   const [selectedMastery, setSelectedMastery] = useState<number | null>(null);
   const [randomCard, setRandomCard] = useState<ReturnType<typeof getRandomCard>>(null);
   const [showRandomCard, setShowRandomCard] = useState(false);
+  const [reviewSessionCards, setReviewSessionCards] = useState<string[]>([]);
+  const [reviewedInSession, setReviewedInSession] = useState<Set<string>>(new Set());
 
   const reviewedCount = useMemo(() => {
     return reviewQueue.filter(r => r.isReviewed).length;
   }, [reviewQueue]);
 
+  const sessionReviewedCount = reviewedInSession.size;
+  const sessionTotalCount = reviewSessionCards.length;
+  const sessionProgressPercent = sessionTotalCount > 0 ? Math.round((sessionReviewedCount / sessionTotalCount) * 100) : 0;
+
   const totalCount = reviewQueue.length;
   const progressPercent = totalCount > 0 ? Math.round((reviewedCount / totalCount) * 100) : 0;
 
-  const currentCard = pendingReviewCards[currentIndex];
+  const currentCardId = reviewSessionCards[currentIndex];
+  const currentCard = cards.find(c => c.id === currentCardId) || pendingReviewCards[currentIndex];
 
   usePullDownRefresh(() => {
     setTimeout(() => {
@@ -50,11 +57,14 @@ const ReviewPage: React.FC = () => {
       Taro.showToast({ title: '暂无待复习卡片', icon: 'none' });
       return;
     }
+    const sessionOrder = pendingReviewCards.map(card => card.id);
+    setReviewSessionCards(sessionOrder);
+    setReviewedInSession(new Set());
     setMode('card');
     setCurrentIndex(0);
     setIsFlipped(false);
     setSelectedMastery(null);
-    console.log('[Review] 开始复习');
+    console.log('[Review] 开始复习，共', sessionOrder.length, '张卡片');
   };
 
   const handleFlip = () => {
@@ -66,20 +76,22 @@ const ReviewPage: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (!currentCard) return;
+    if (!currentCard || !currentCardId) return;
 
     if (selectedMastery) {
-      markMastery(currentCard.id, selectedMastery as 1 | 2 | 3 | 4 | 5);
+      markMastery(currentCardId, selectedMastery as 1 | 2 | 3 | 4 | 5);
     }
-    markReviewed(currentCard.id);
+    markReviewed(currentCardId);
 
-    if (currentIndex < pendingReviewCards.length - 1) {
+    setReviewedInSession(prev => new Set([...prev, currentCardId]));
+
+    if (currentIndex < reviewSessionCards.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setIsFlipped(false);
       setSelectedMastery(null);
     } else {
       setShowComplete(true);
-      console.log('[Review] 复习完成');
+      console.log('[Review] 复习完成，共复习', reviewSessionCards.length, '张卡片');
     }
   };
 
@@ -200,12 +212,17 @@ const ReviewPage: React.FC = () => {
 
         {mode === 'card' && currentCard && (
           <View className={styles.cardMode}>
+            <View className={styles.sessionProgress}>
+              <Text className={styles.sessionProgressText}>
+                本次复习进度: {sessionReviewedCount}/{sessionTotalCount} ({sessionProgressPercent}%)
+              </Text>
+            </View>
             <View className={styles.cardContainer} onClick={handleFlip}>
               <View className={classnames(styles.flipCard, isFlipped && styles.flipped)}>
                 <View className={classnames(styles.cardFace, styles.cardFront)}>
                   <Text className={styles.hintIcon}>🤔</Text>
                   <Text className={styles.hintText}>点击卡片查看内容</Text>
-                  <Text className={styles.tapHint}>第 {currentIndex + 1} / {pendingReviewCards.length} 张</Text>
+                  <Text className={styles.tapHint}>第 {currentIndex + 1} / {sessionTotalCount} 张</Text>
                   <View className={styles.cardTags}>
                     {currentCard.themes.map((theme, idx) => (
                       <ThemeTag key={idx} name={theme} />
@@ -264,7 +281,7 @@ const ReviewPage: React.FC = () => {
                     onClick={handleNext}
                   >
                     <Text>
-                      {currentIndex === pendingReviewCards.length - 1 ? '完成 ✓' : '下一张 →'}
+                      {currentIndex === sessionTotalCount - 1 ? '完成 ✓' : '下一张 →'}
                     </Text>
                   </View>
                 </View>
@@ -300,15 +317,15 @@ const ReviewPage: React.FC = () => {
             <Text className={styles.modalSubtitle}>你已完成今日的复习任务</Text>
             <View className={styles.modalStats}>
               <View className={styles.modalStat}>
-                <Text className={styles.statNum}>{pendingReviewCards.length + reviewedCount}</Text>
-                <Text className={styles.statLabel}>总卡片数</Text>
+                <Text className={styles.statNum}>{sessionTotalCount}</Text>
+                <Text className={styles.statLabel}>本次复习</Text>
               </View>
               <View className={styles.modalStat}>
-                <Text className={styles.statNum}>{reviewedCount}</Text>
-                <Text className={styles.statLabel}>已复习</Text>
+                <Text className={styles.statNum}>{sessionReviewedCount}</Text>
+                <Text className={styles.statLabel}>已完成</Text>
               </View>
               <View className={styles.modalStat}>
-                <Text className={styles.statNum}>{Math.round(cards.reduce((sum, c) => sum + c.reviewCount, 0) / cards.length)}</Text>
+                <Text className={styles.statNum}>{Math.round(cards.reduce((sum, c) => sum + c.reviewCount, 0) / Math.max(cards.length, 1))}</Text>
                 <Text className={styles.statLabel}>平均复习</Text>
               </View>
             </View>

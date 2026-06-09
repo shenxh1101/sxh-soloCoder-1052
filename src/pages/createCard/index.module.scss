@@ -430,3 +430,90 @@
     }
   }
 }
+
+.ocrFailedTip {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+
+  .ocrFailedIcon {
+    font-size: $font-size-lg;
+  }
+
+  .ocrFailedText {
+    font-size: $font-size-sm;
+    color: $color-error;
+    flex: 1;
+  }
+}
+
+.recognizingTip {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+
+  .recognizingIcon {
+    font-size: $font-size-lg;
+    animation: spin 1s linear infinite;
+  }
+
+  .recognizingText {
+    font-size: $font-size-sm;
+    color: $color-primary;
+    flex: 1;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.colorPickerTitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.colorPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+
+  .colorOption {
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: $radius-round;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all $transition-base;
+    border: 4rpx solid transparent;
+
+    &.colorSelected {
+      border-color: $color-text-primary;
+      transform: scale(1.1);
+    }
+
+    .colorCheck {
+      color: $color-text-white;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-bold;
+    }
+  }
+}

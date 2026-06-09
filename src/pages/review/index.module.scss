@@ -156,6 +156,20 @@
 }
 
 .cardMode {
+  .sessionProgress {
+    text-align: center;
+    margin-bottom: $spacing-md;
+    padding: $spacing-sm $spacing-md;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: $radius-button;
+
+    .sessionProgressText {
+      font-size: $font-size-sm;
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+
   .cardContainer {
     perspective: 1000px;
     margin-bottom: $spacing-xl;

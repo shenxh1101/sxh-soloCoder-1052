@@ -14,7 +14,7 @@ const colorOptions = [
 ];
 
 const ThemesPage: React.FC = () => {
-  const { cards, themes, favoriteCards, toggleFavorite } = useCards();
+  const { cards, themes, favoriteCards, toggleFavorite, addTheme } = useCards();
 
   const [activeTab, setActiveTab] = useState<'themes' | 'favorites'>('themes');
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
@@ -49,7 +49,7 @@ const ThemesPage: React.FC = () => {
         cardCount: themeStats[name],
       }));
 
-    return [...themeList, ...customThemes].filter(t => t.cardCount > 0);
+    return [...themeList, ...customThemes];
   }, [themes, themeStats]);
 
   const selectedThemeCards = useMemo(() => {
@@ -97,11 +97,22 @@ const ThemesPage: React.FC = () => {
 
   const confirmNewTheme = () => {
     if (newThemeName.trim()) {
+      const themeName = newThemeName.trim();
+      const existingTheme = themes.find(t => t.name === themeName);
+      if (existingTheme) {
+        Taro.showToast({ title: '主题已存在', icon: 'none' });
+        return;
+      }
+      addTheme({
+        id: `theme_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: themeName,
+        color: selectedColor,
+      });
       Taro.showToast({ title: '主题创建成功', icon: 'success' });
       setNewThemeName('');
-      setSelectedColor(colorOptions[0]);
+      setSelectedColor(colorOptions[Math.floor(Math.random() * colorOptions.length)]);
       setShowNewTheme(false);
-      console.log('[Themes] 新建主题:', newThemeName, selectedColor);
+      console.log('[Themes] 新建主题:', themeName, selectedColor);
     }
   };
 

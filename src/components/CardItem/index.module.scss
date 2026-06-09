@@ -77,6 +77,31 @@
     gap: $spacing-sm;
   }
 
+  .metaRight {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  .relatedToggle {
+    display: flex;
+    align-items: center;
+    gap: 4rpx;
+    padding: 4rpx 12rpx;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: $radius-xs;
+
+    .relatedIcon {
+      font-size: $font-size-sm;
+    }
+
+    .relatedCount {
+      font-size: $font-size-xs;
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+
   .timeText {
     font-size: $font-size-xs;
     color: $color-text-tertiary;
@@ -194,5 +219,53 @@
     &:active {
       transform: scale(1.2);
     }
+  }
+}
+
+.relatedSection {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+
+  .relatedHeader {
+    margin-bottom: $spacing-sm;
+  }
+
+  .relatedTitle {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    font-weight: $font-weight-medium;
+  }
+
+  .relatedList {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+
+  .relatedCardItem {
+    padding: $spacing-sm $spacing-md;
+    background: $color-bg-hover;
+    border-radius: $radius-md;
+    transition: all $transition-base;
+
+    &:active {
+      transform: scale(0.98);
+      background: $color-bg-page;
+    }
+  }
+
+  .relatedCardContent {
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    line-height: $line-height-normal;
+    @include text-ellipsis-multi(2);
+    margin-bottom: $spacing-xs;
+  }
+
+  .relatedCardTags {
+    display: flex;
+    gap: $spacing-xs;
+    flex-wrap: wrap;
   }
 }

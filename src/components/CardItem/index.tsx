@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
@@ -23,7 +23,9 @@ const masteryLabels: Record<number, string> = {
 };
 
 const CardItem: React.FC<CardItemProps> = ({ card, showActions = false, onReview }) => {
-  const { toggleFavorite, markMastery } = useCards();
+  const { toggleFavorite, markMastery, getRelatedCards } = useCards();
+  const [showRelated, setShowRelated] = useState(false);
+  const relatedCards = getRelatedCards(card.id);
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -40,6 +42,21 @@ const CardItem: React.FC<CardItemProps> = ({ card, showActions = false, onReview
     e.stopPropagation();
     Taro.showShareMenu?.();
     Taro.showToast({ title: '分享功能', icon: 'none' });
+  };
+
+  const handleRelatedCardClick = (relatedCard: Card, e: React.MouseEvent) => {
+    e.stopPropagation();
+    Taro.showModal({
+      title: '相关卡片',
+      content: relatedCard.content,
+      showCancel: false,
+      confirmText: '知道了',
+    });
+  };
+
+  const toggleRelatedCards = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowRelated(!showRelated);
   };
 
   return (
@@ -76,8 +93,40 @@ const CardItem: React.FC<CardItemProps> = ({ card, showActions = false, onReview
           </View>
           <Text className={styles.reviewCount}>已复习 {card.reviewCount} 次</Text>
         </View>
-        <Text className={styles.timeText}>{getRelativeTime(card.createdAt)}</Text>
+        <View className={styles.metaRight}>
+          {relatedCards.length > 0 && (
+            <View className={styles.relatedToggle} onClick={toggleRelatedCards}>
+              <Text className={styles.relatedIcon}>🔗</Text>
+              <Text className={styles.relatedCount}>{relatedCards.length}</Text>
+            </View>
+          )}
+          <Text className={styles.timeText}>{getRelativeTime(card.createdAt)}</Text>
+        </View>
       </View>
+
+      {relatedCards.length > 0 && showRelated && (
+        <View className={styles.relatedSection}>
+          <View className={styles.relatedHeader}>
+            <Text className={styles.relatedTitle}>🔗 相关卡片 ({relatedCards.length})</Text>
+          </View>
+          <View className={styles.relatedList}>
+            {relatedCards.map((relatedCard) => (
+              <View
+                key={relatedCard.id}
+                className={styles.relatedCardItem}
+                onClick={(e) => handleRelatedCardClick(relatedCard, e)}
+              >
+                <Text className={styles.relatedCardContent}>{relatedCard.content}</Text>
+                <View className={styles.relatedCardTags}>
+                  {relatedCard.themes.slice(0, 2).map((theme, idx) => (
+                    <ThemeTag key={idx} name={theme} size="sm" />
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       {showActions && (
         <View className={styles.actionRow}>
