@@ -1,28 +1,47 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Input } from '@tarojs/components';
+import { View, Text, ScrollView, Input, Textarea } from '@tarojs/components';
 import Taro, { usePullDownRefresh } from '@tarojs/taro';
 import styles from './index.module.scss';
 import classnames from 'classnames';
 import { useCards } from '@/store/CardContext';
 import CardItem from '@/components/CardItem';
 import EmptyState from '@/components/EmptyState';
-import { Card } from '@/types/card';
+import { Card, ThemeNote } from '@/types/card';
 
 const colorOptions = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
   '#10b981', '#06b6d4', '#3b82f6', '#84cc16', '#f97316',
 ];
 
-const ThemesPage: React.FC = () => {
-  const { cards, themes, favoriteCards, toggleFavorite, addTheme } = useCards();
+const masteryEmojis = ['😕', '🤔', '🙂', '😊', '🤩'];
+const masteryLabels = ['初识', '了解', '熟悉', '掌握', '精通'];
 
-  const [activeTab, setActiveTab] = useState<'themes' | 'favorites'>('themes');
+const ThemesPage: React.FC = () => {
+  const {
+    cards,
+    themes,
+    favoriteCards,
+    toggleFavorite,
+    addTheme,
+    createThemeNote,
+    updateThemeNote,
+    deleteThemeNote,
+    getThemeNotes,
+  } = useCards();
+
+  const [activeTab, setActiveTab] = useState<'themes' | 'favorites' | 'notes'>('themes');
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
-  const [generatedNotes, setGeneratedNotes] = useState<Card[]>([]);
   const [showNewTheme, setShowNewTheme] = useState(false);
   const [newThemeName, setNewThemeName] = useState('');
   const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
+  const [groupBy, setGroupBy] = useState<'source' | 'mastery'>('mastery');
+  const [editingNote, setEditingNote] = useState<ThemeNote | null>(null);
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
 
   const themeStats = useMemo(() => {
     const stats: Record<string, number> = {};
@@ -57,6 +76,13 @@ const ThemesPage: React.FC = () => {
     return cards.filter(card => card.themes.includes(selectedTheme));
   }, [selectedTheme, cards]);
 
+  const themeNotes = useMemo(() => {
+    if (!selectedTheme) return [];
+    return getThemeNotes(selectedTheme);
+  }, [selectedTheme, getThemeNotes]);
+
+  const allNotes = useMemo(() => getThemeNotes(), [getThemeNotes]);
+
   usePullDownRefresh(() => {
     setTimeout(() => {
       Taro.stopPullDownRefresh();
@@ -66,27 +92,98 @@ const ThemesPage: React.FC = () => {
 
   const handleThemeClick = (themeName: string) => {
     setSelectedTheme(selectedTheme === themeName ? null : themeName);
+    setSelectMode(false);
+    setSelectedCardIds(new Set());
+  };
+
+  const toggleCardSelection = (cardId: string) => {
+    setSelectedCardIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cardId)) {
+        newSet.delete(cardId);
+      } else {
+        newSet.add(cardId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllCards = () => {
+    if (selectedCardIds.size === selectedThemeCards.length) {
+      setSelectedCardIds(new Set());
+    } else {
+      setSelectedCardIds(new Set(selectedThemeCards.map(c => c.id)));
+    }
   };
 
   const handleGenerateNotes = () => {
-    if (selectedThemeCards.length === 0) {
-      Taro.showToast({ title: '该主题下暂无卡片', icon: 'none' });
+    const cardsToUse = selectMode
+      ? Array.from(selectedCardIds)
+      : selectedThemeCards.map(c => c.id);
+
+    if (cardsToUse.length === 0) {
+      Taro.showToast({ title: '请选择要生成笔记的卡片', icon: 'none' });
       return;
     }
-    setGeneratedNotes(selectedThemeCards);
+
+    const note = createThemeNote(selectedTheme!, cardsToUse, groupBy);
+    setEditingNote(note);
+    setNoteTitle(note.title);
+    setNoteContent(note.content);
     setShowNotes(true);
-    console.log('[Themes] 生成笔记:', selectedTheme);
+    console.log('[Themes] 生成笔记:', selectedTheme, '分组方式:', groupBy);
   };
 
-  const handleCopyNotes = () => {
-    const notesText = generatedNotes
-      .map((card, idx) => `${idx + 1}. ${card.content}${card.source ? `\n   来源：${card.source}` : ''}`)
-      .join('\n\n');
+  const handleSaveNote = () => {
+    if (!editingNote) return;
+
+    updateThemeNote(editingNote.id, {
+      title: noteTitle,
+      content: noteContent,
+    });
+
+    Taro.showToast({ title: '笔记已保存', icon: 'success' });
+    setShowNotes(false);
+    setEditingNote(null);
+    console.log('[Themes] 保存笔记:', editingNote.id);
+  };
+
+  const handleCopyNote = () => {
+    const fullContent = `# ${noteTitle}\n\n${noteContent}`;
 
     Taro.setClipboardData({
-      data: `# ${selectedTheme} 主题笔记\n\n${notesText}`,
+      data: fullContent,
       success: () => {
         Taro.showToast({ title: '已复制到剪贴板', icon: 'success' });
+      },
+    });
+  };
+
+  const handleShareNote = () => {
+    Taro.showShareMenu({
+      withShareTicket: true,
+      success: () => {
+        Taro.showToast({ title: '请点击右上角分享', icon: 'none' });
+      },
+    });
+  };
+
+  const handleEditNote = (note: ThemeNote) => {
+    setEditingNote(note);
+    setNoteTitle(note.title);
+    setNoteContent(note.content);
+    setShowNotes(true);
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    Taro.showModal({
+      title: '确认删除',
+      content: '确定要删除这篇笔记吗？',
+      success: (res) => {
+        if (res.confirm) {
+          deleteThemeNote(noteId);
+          Taro.showToast({ title: '已删除', icon: 'success' });
+        }
       },
     });
   };
@@ -118,6 +215,13 @@ const ThemesPage: React.FC = () => {
 
   const handleBack = () => {
     setSelectedTheme(null);
+    setSelectMode(false);
+    setSelectedCardIds(new Set());
+  };
+
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
   return (
@@ -125,17 +229,24 @@ const ThemesPage: React.FC = () => {
       <View className={styles.tabBar}>
         <View
           className={classnames(styles.tabBtn, activeTab === 'themes' && styles.active)}
-          onClick={() => setActiveTab('themes')}
+          onClick={() => { setActiveTab('themes'); setSelectedTheme(null); }}
         >
           <Text className={styles.tabIcon}>🏷️</Text>
           <Text>主题分类</Text>
         </View>
         <View
           className={classnames(styles.tabBtn, activeTab === 'favorites' && styles.active)}
-          onClick={() => setActiveTab('favorites')}
+          onClick={() => { setActiveTab('favorites'); setSelectedTheme(null); }}
         >
           <Text className={styles.tabIcon}>⭐</Text>
           <Text>我的收藏</Text>
+        </View>
+        <View
+          className={classnames(styles.tabBtn, activeTab === 'notes' && styles.active)}
+          onClick={() => { setActiveTab('notes'); setSelectedTheme(null); }}
+        >
+          <Text className={styles.tabIcon}>📝</Text>
+          <Text>笔记列表</Text>
         </View>
       </View>
 
@@ -189,9 +300,74 @@ const ThemesPage: React.FC = () => {
                 <Text className={styles.detailName}>{selectedTheme}</Text>
                 <Text className={styles.detailCount}>{selectedThemeCards.length} 张卡片</Text>
               </View>
-              <View className={styles.generateBtn} onClick={handleGenerateNotes}>
+            </View>
+
+            <View className={styles.detailActions}>
+              <View className={styles.actionGroup}>
+                <View className={styles.selectModeToggle}>
+                  <Text className={styles.actionLabel}>选择卡片</Text>
+                  <View
+                    className={classnames(styles.switchBtn, selectMode && styles.active)}
+                    onClick={() => {
+                      setSelectMode(!selectMode);
+                      if (!selectMode) {
+                        setSelectedCardIds(new Set());
+                      }
+                    }}
+                  >
+                      <View className={styles.switchTrack}>
+                        <View className={styles.switchThumb} />
+                      </View>
+                      <Text className={styles.switchLabel}>{selectMode ? '开启' : '关闭'}</Text>
+                    </View>
+                  </View>
+              </View>
+
+              {selectMode && (
+                <View className={styles.selectionBar}>
+                  <View
+                    className={styles.selectAllBtn}
+                    onClick={selectAllCards}
+                  >
+                    <Text>
+                      {selectedCardIds.size === selectedThemeCards.length ? '取消全选' : '全选'}
+                    </Text>
+                  </View>
+                  <Text className={styles.selectedCount}>
+                    已选 {selectedCardIds.size}/{selectedThemeCards.length} 张
+                  </Text>
+                </View>
+              )}
+
+              <View className={styles.groupBySection}>
+                <Text className={styles.actionLabel}>笔记分组方式</Text>
+                <View className={styles.groupByOptions}>
+                  <View
+                    className={classnames(styles.groupOption, groupBy === 'mastery' && styles.active)}
+                    onClick={() => setGroupBy('mastery')}
+                  >
+                    <Text>按掌握程度</Text>
+                  </View>
+                  <View
+                    className={classnames(styles.groupOption, groupBy === 'source' && styles.active)}
+                    onClick={() => setGroupBy('source')}
+                  >
+                    <Text>按来源</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View
+                className={classnames(
+                  styles.generateBtn,
+                  (selectMode ? selectedCardIds.size === 0 : selectedThemeCards.length === 0) && styles.disabled
+                )}
+                onClick={handleGenerateNotes}
+              >
                 <Text className={styles.btnIcon}>📝</Text>
-                <Text className={styles.btnText}>生成笔记</Text>
+                <Text className={styles.btnText}>
+                  {selectMode ? `生成笔记 (${selectedCardIds.size}张)` : '生成笔记 (全部)'}
+                </Text>
               </View>
             </View>
 
@@ -201,12 +377,60 @@ const ThemesPage: React.FC = () => {
                 <Text className={styles.sectionCount}>共 {selectedThemeCards.length} 张</Text>
               </View>
 
-              <ScrollView>
+              <ScrollView className={styles.cardList}>
                 {selectedThemeCards.map((card) => (
-                  <CardItem key={card.id} card={card} showActions />
+                  <View key={card.id} className={styles.cardWrapper}>
+                    {selectMode && (
+                      <View
+                        className={classnames(
+                          styles.checkbox,
+                          selectedCardIds.has(card.id) && styles.checked
+                        )}
+                        onClick={() => toggleCardSelection(card.id)}
+                      >
+                        {selectedCardIds.has(card.id) && <Text className={styles.checkmark}>✓</Text>}
+                      </View>
+                    )}
+                    <View className={styles.cardContentWrapper}>
+                      <CardItem card={card} showActions />
+                    </View>
+                  </View>
                 ))}
               </ScrollView>
             </View>
+
+            {themeNotes.length > 0 && (
+              <View className={styles.notesSection}>
+                <View className={styles.sectionHeader}>
+                  <Text className={styles.sectionTitle}>📝 主题笔记</Text>
+                  <Text className={styles.sectionCount}>共 {themeNotes.length} 篇</Text>
+                </View>
+                <ScrollView className={styles.notesList}>
+                  {themeNotes.map((note) => (
+                    <View key={note.id} className={styles.noteListItem}>
+                      <View className={styles.noteListHeader}>
+                        <Text className={styles.noteListTitle}>{note.title}</Text>
+                        <Text className={styles.noteListDate}>{formatDate(note.createdAt)}</Text>
+                      </View>
+                      <Text className={styles.noteListPreview} numberOfLines={2}>
+                        {note.content.replace(/[#\n]/g, ' ').trim()}
+                      </Text>
+                      <View className={styles.noteListActions}>
+                        <View className={styles.noteListBtn} onClick={() => handleEditNote(note)}>
+                          <Text>编辑</Text>
+                        </View>
+                        <View
+                          className={classnames(styles.noteListBtn, styles.danger)}
+                          onClick={() => handleDeleteNote(note.id)}
+                        >
+                          <Text>删除</Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
         )}
 
@@ -244,27 +468,80 @@ const ThemesPage: React.FC = () => {
             </ScrollView>
           </View>
         )}
+
+        {activeTab === 'notes' && (
+          <View className={styles.notesPage}>
+            <View className={styles.sectionHeader}>
+              <Text className={styles.sectionTitle}>📝 所有笔记</Text>
+              <Text className={styles.sectionCount}>共 {allNotes.length} 篇</Text>
+            </View>
+
+            <ScrollView>
+              {allNotes.length === 0 ? (
+                <EmptyState
+                  icon="📝"
+                  title="暂无笔记"
+                  description="进入主题详情页，选择卡片生成主题笔记"
+                />
+              ) : (
+                  allNotes.map((note) => (
+                    <View key={note.id} className={styles.noteListItem}>
+                      <View className={styles.noteListHeader}>
+                        <View className={styles.noteThemeTag}>
+                          <Text className={styles.noteThemeName}>{note.themeName}</Text>
+                        </View>
+                        <Text className={styles.noteListDate}>{formatDate(note.createdAt)}</Text>
+                      </View>
+                      <Text className={styles.noteListTitle}>{note.title}</Text>
+                      <Text className={styles.noteListPreview} numberOfLines={2}>
+                        {note.content.replace(/[#\n]/g, ' ').trim()}
+                      </Text>
+                      <View className={styles.noteListActions}>
+                        <View className={styles.noteListBtn} onClick={() => handleEditNote(note)}>
+                          <Text>编辑</Text>
+                        </View>
+                        <View
+                          className={classnames(styles.noteListBtn, styles.danger)}
+                          onClick={() => handleDeleteNote(note.id)}
+                        >
+                          <Text>删除</Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))
+                )}
+            </ScrollView>
+          </View>
+        )}
       </View>
 
-      {showNotes && (
+      {showNotes && editingNote && (
         <View className={styles.notesModal} onClick={() => setShowNotes(false)}>
           <View className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <View className={styles.modalHeader}>
-              <Text className={styles.modalTitle}>📝 {selectedTheme} 主题笔记</Text>
-              <View className={styles.closeBtn} onClick={() => setShowNotes(false)}>
-                <Text>✕</Text>
-              </View>
+            <Text className={styles.modalTitle}>📝 {editingNote.themeName} 主题笔记</Text>
+            <View className={styles.closeBtn} onClick={() => setShowNotes(false)}>
+              <Text>✕</Text>
+            </View>
             </View>
             <View className={styles.modalBody}>
-              {generatedNotes.map((card, idx) => (
-                <View key={card.id} className={styles.noteItem}>
-                  <Text className={styles.noteIndex}>卡片 {idx + 1}</Text>
-                  <Text className={styles.noteContent}>{card.content}</Text>
-                  {card.source && (
-                    <Text className={styles.noteSource}>📚 {card.source}</Text>
-                  )}
-                </View>
-              ))}
+              <Text className={styles.inputLabel}>笔记标题</Text>
+              <Input
+                className={styles.noteTitleInput}
+                placeholder="请输入笔记标题"
+                value={noteTitle}
+                onInput={(e) => setNoteTitle(e.detail.value)}
+              />
+
+              <Text className={styles.inputLabel}>笔记内容</Text>
+              <Textarea
+                className={styles.noteContentInput}
+                placeholder="在此编辑笔记内容，支持分段和换行"
+                value={noteContent}
+                onInput={(e) => setNoteContent(e.detail.value)}
+                autoHeight
+                maxlength={-1}
+              />
             </View>
             <View className={styles.modalFooter}>
               <View
@@ -274,10 +551,22 @@ const ThemesPage: React.FC = () => {
                 <Text>关闭</Text>
               </View>
               <View
-                className={classnames(styles.modalBtn, styles.primary)}
-                onClick={handleCopyNotes}
+                className={classnames(styles.modalBtn, styles.secondary)}
+                onClick={handleCopyNote}
               >
-                <Text>复制笔记</Text>
+                <Text>复制</Text>
+              </View>
+              <View
+                className={classnames(styles.modalBtn, styles.secondary)}
+                onClick={handleShareNote}
+              >
+                <Text>分享</Text>
+              </View>
+              <View
+                className={classnames(styles.modalBtn, styles.primary)}
+                onClick={handleSaveNote}
+              >
+                <Text>保存</Text>
               </View>
             </View>
           </View>
