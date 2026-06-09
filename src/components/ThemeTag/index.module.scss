@@ -1,0 +1,33 @@
+@use '@/styles/variables.scss' as *;
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  background-color: $color-bg-tag;
+  border-radius: $radius-sm;
+  margin-right: $spacing-sm;
+  margin-bottom: $spacing-sm;
+
+  &.tagMd {
+    padding: 8rpx 20rpx;
+    border-radius: $radius-md;
+  }
+
+  &.clickable {
+    cursor: pointer;
+    transition: all $transition-base;
+
+    &:active {
+      opacity: 0.8;
+      transform: scale(0.96);
+    }
+  }
+}
+
+.tagText {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+}

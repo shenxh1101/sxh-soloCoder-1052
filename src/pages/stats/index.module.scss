@@ -1,0 +1,381 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: $spacing-xl;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $spacing-lg $spacing-xl * 2;
+  border-bottom-left-radius: $spacing-xl;
+  border-bottom-right-radius: $spacing-xl;
+  margin-bottom: -$spacing-xl;
+}
+
+.userGreeting {
+  margin-bottom: $spacing-xl;
+
+  .greetingText {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $color-text-white;
+    margin-bottom: $spacing-xs;
+  }
+
+  .subText {
+    font-size: $font-size-sm;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .streakBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    background: rgba(255, 255, 255, 0.2);
+    padding: $spacing-xs $spacing-md;
+    border-radius: $radius-button;
+    margin-top: $spacing-sm;
+
+    .streakIcon {
+      font-size: $font-size-lg;
+    }
+
+    .streakText {
+      font-size: $font-size-sm;
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.overviewCard {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  backdrop-filter: blur(10px);
+
+  .cardIcon {
+    font-size: 48rpx;
+    margin-bottom: $spacing-sm;
+  }
+
+  .cardValue {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+    line-height: 1.2;
+  }
+
+  .cardLabel {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: $spacing-xs;
+  }
+
+  .cardTrend {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    margin-top: $spacing-sm;
+    padding: 2rpx 12rpx;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-sm;
+
+    .trendText {
+      font-size: $font-size-xs;
+      color: $color-text-white;
+    }
+  }
+}
+
+.content {
+  padding: $spacing-lg;
+}
+
+.section {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+
+    .titleIcon {
+      font-size: $font-size-xl;
+    }
+  }
+
+  .sectionSubtitle {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.chartContainer {
+  .chartLegend {
+    display: flex;
+    justify-content: center;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-lg;
+
+    .legendItem {
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+
+      .legendDot {
+        width: 24rpx;
+        height: 24rpx;
+        border-radius: $radius-round;
+      }
+
+      .legendNew {
+        background: $color-primary;
+      }
+
+      .legendReviewed {
+        background: $color-success;
+      }
+
+      .legendText {
+        font-size: $font-size-xs;
+        color: $color-text-secondary;
+      }
+    }
+  }
+
+  .chartBars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 320rpx;
+    padding: 0 $spacing-sm;
+    border-bottom: 1rpx solid $color-border;
+  }
+
+  .barGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: $spacing-xs;
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4rpx;
+      height: 100%;
+    }
+
+    .bar {
+      width: 20rpx;
+      border-radius: $radius-sm $radius-sm 0 0;
+      transition: all $transition-base;
+      min-height: 4rpx;
+
+      &.barNew {
+        background: linear-gradient(180deg, $color-primary 0%, $color-primary-light 100%);
+      }
+
+      &.barReviewed {
+        background: linear-gradient(180deg, $color-success 0%, #34d399 100%);
+      }
+    }
+
+    .barLabel {
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+      margin-top: $spacing-sm;
+    }
+  }
+}
+
+.masterySection {
+  .masteryList {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  .masteryItem {
+    .masteryHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-xs;
+
+      .masteryInfo {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+
+        .masteryEmoji {
+          font-size: $font-size-lg;
+        }
+
+        .masteryName {
+          font-size: $font-size-md;
+          color: $color-text-primary;
+          font-weight: $font-weight-medium;
+        }
+      }
+
+      .masteryCount {
+        font-size: $font-size-sm;
+        color: $color-text-secondary;
+      }
+    }
+
+    .progressBar {
+      height: 16rpx;
+      background: $color-bg-hover;
+      border-radius: $radius-round;
+      overflow: hidden;
+
+      .progressFill {
+        height: 100%;
+        border-radius: $radius-round;
+        transition: width $transition-slow ease;
+      }
+
+      .fill1 { background: linear-gradient(90deg, $color-mastery-1 0%, #fbbf24 100%); }
+      .fill2 { background: linear-gradient(90deg, $color-mastery-2 0%, #f59e0b 100%); }
+      .fill3 { background: linear-gradient(90deg, $color-mastery-3 0%, #eab308 100%); }
+      .fill4 { background: linear-gradient(90deg, $color-mastery-4 0%, #34d399 100%); }
+      .fill5 { background: linear-gradient(90deg, $color-mastery-5 0%, #10b981 100%); }
+    }
+  }
+}
+
+.themesSection {
+  .themesList {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  .themeRank {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+
+    .rankNumber {
+      width: 48rpx;
+      height: 48rpx;
+      border-radius: $radius-round;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-bold;
+      color: $color-text-white;
+
+      &.rank1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+      &.rank2 { background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); }
+      &.rank3 { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+      &.rankOther { background: $color-bg-hover; color: $color-text-secondary; }
+    }
+
+    .themeInfo {
+      flex: 1;
+
+      .themeName {
+        font-size: $font-size-md;
+        color: $color-text-primary;
+        font-weight: $font-weight-medium;
+        margin-bottom: $spacing-xs;
+      }
+
+      .themeProgress {
+        height: 8rpx;
+        background: $color-bg-hover;
+        border-radius: $radius-round;
+        overflow: hidden;
+
+        .progressFill {
+          height: 100%;
+          border-radius: $radius-round;
+          transition: width $transition-slow ease;
+        }
+      }
+    }
+
+    .themeCount {
+      font-size: $font-size-sm;
+      color: $color-text-secondary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.shareSection {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 2rpx dashed $color-primary;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  text-align: center;
+
+  .shareIcon {
+    font-size: 80rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .shareTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .shareDesc {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-lg;
+    line-height: $line-height-loose;
+  }
+
+  .shareBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding: $spacing-md $spacing-xl;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    border-radius: $radius-button;
+    font-size: $font-size-md;
+    font-weight: $font-weight-medium;
+    color: $color-text-white;
+
+    &:active {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+
+    .btnIcon {
+      font-size: $font-size-xl;
+    }
+  }
+}

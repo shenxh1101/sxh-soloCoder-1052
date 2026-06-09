@@ -1,0 +1,198 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+.cardImage {
+  width: 100%;
+  height: 280rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+
+  .image {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.cardContent {
+  margin-bottom: $spacing-md;
+
+  .contentText {
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    line-height: $line-height-loose;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.sourceRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+
+  .sourceIcon {
+    font-size: $font-size-sm;
+    margin-right: $spacing-xs;
+  }
+
+  .sourceText {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    @include text-ellipsis;
+  }
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-md;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+
+  .metaLeft {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  .timeText {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.masteryBadge {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+
+  &.mastery1 { background-color: $color-mastery-1; }
+  &.mastery2 { background-color: $color-mastery-2; }
+  &.mastery3 { background-color: $color-mastery-3; }
+  &.mastery4 { background-color: $color-mastery-4; }
+  &.mastery5 { background-color: $color-mastery-5; }
+
+  .masteryText {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+}
+
+.reviewCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.actionRow {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.actionButtons {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.actionBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  background-color: $color-bg-hover;
+  border-radius: $radius-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.96);
+  }
+
+  &.favoriteActive {
+    background-color: rgba(245, 158, 11, 0.1);
+
+    .actionText {
+      color: $color-warning;
+    }
+  }
+
+  &.reviewBtn {
+    background-color: rgba(99, 102, 241, 0.1);
+
+    .actionText {
+      color: $color-primary;
+    }
+  }
+
+  .actionIcon {
+    font-size: $font-size-lg;
+  }
+
+  .actionText {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+  }
+}
+
+.masteryRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  .masteryLabel {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    margin-right: $spacing-xs;
+  }
+
+  .masteryDot {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: $radius-round;
+    border: 2rpx solid $color-border;
+    transition: all $transition-base;
+
+    &.masteryDot1 { border-color: #fbbf24; }
+    &.masteryDot2 { border-color: #f59e0b; }
+    &.masteryDot3 { border-color: #eab308; }
+    &.masteryDot4 { border-color: #34d399; }
+    &.masteryDot5 { border-color: #10b981; }
+
+    &.masteryDotActive {
+      &.masteryDot1 { background-color: $color-mastery-1; }
+      &.masteryDot2 { background-color: $color-mastery-2; }
+      &.masteryDot3 { background-color: $color-mastery-3; }
+      &.masteryDot4 { background-color: $color-mastery-4; }
+      &.masteryDot5 { background-color: $color-mastery-5; }
+    }
+
+    &:active {
+      transform: scale(1.2);
+    }
+  }
+}

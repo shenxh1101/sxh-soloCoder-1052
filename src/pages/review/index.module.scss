@@ -1,0 +1,499 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: $spacing-xl;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $spacing-lg;
+  border-bottom-left-radius: $spacing-xl;
+  border-bottom-right-radius: $spacing-xl;
+  margin-bottom: $spacing-lg;
+}
+
+.progressHeader {
+  text-align: center;
+  margin-bottom: $spacing-lg;
+
+  .title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $color-text-white;
+    margin-bottom: $spacing-sm;
+  }
+
+  .subtitle {
+    font-size: $font-size-sm;
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.statCard {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  text-align: center;
+  backdrop-filter: blur(10px);
+
+  .statNumber {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-white;
+  }
+
+  .statLabel {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: $spacing-xs;
+  }
+
+  &.highlight {
+    background: rgba(255, 255, 255, 0.25);
+
+    .statNumber {
+      font-size: 56rpx;
+    }
+  }
+}
+
+.progressBar {
+  height: 16rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-round;
+  overflow: hidden;
+
+  .progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24 0%, #10b981 100%);
+    border-radius: $radius-round;
+    transition: width $transition-slow ease;
+  }
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-sm;
+
+  .text {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.modeToggle {
+  display: flex;
+  margin: 0 $spacing-lg $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  padding: $spacing-xs;
+  box-shadow: $shadow-card;
+
+  .modeBtn {
+    flex: 1;
+    height: $button-height-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-button;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    transition: all $transition-base;
+
+    &.active {
+      background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
+.content {
+  padding: 0 $spacing-lg;
+}
+
+.listMode {
+  .listHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-md;
+
+    .listTitle {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+    }
+
+    .startBtn {
+      padding: $spacing-sm $spacing-lg;
+      background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+      border-radius: $radius-button;
+      font-size: $font-size-sm;
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+
+      &:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+      }
+    }
+  }
+}
+
+.cardMode {
+  .cardContainer {
+    perspective: 1000px;
+    margin-bottom: $spacing-xl;
+  }
+
+  .flipCard {
+    position: relative;
+    width: 100%;
+    min-height: 500rpx;
+    transform-style: preserve-3d;
+    transition: transform $transition-slow ease;
+
+    &.flipped {
+      transform: rotateY(180deg);
+    }
+  }
+
+  .cardFace {
+    position: absolute;
+    width: 100%;
+    min-height: 500rpx;
+    backface-visibility: hidden;
+    border-radius: $radius-xl;
+    padding: $spacing-xl;
+    box-sizing: border-box;
+    box-shadow: $shadow-float;
+  }
+
+  .cardFront {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .hintIcon {
+      font-size: 120rpx;
+      margin-bottom: $spacing-lg;
+    }
+
+    .hintText {
+      font-size: $font-size-lg;
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+      margin-bottom: $spacing-sm;
+    }
+
+    .tapHint {
+      font-size: $font-size-sm;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .cardTags {
+      position: absolute;
+      bottom: $spacing-lg;
+      left: $spacing-lg;
+      right: $spacing-lg;
+      display: flex;
+      flex-wrap: wrap;
+      gap: $spacing-xs;
+      justify-content: center;
+    }
+  }
+
+  .cardBack {
+    background: $color-bg-card;
+    transform: rotateY(180deg);
+    overflow-y: auto;
+
+    .cardContent {
+      font-size: $font-size-md;
+      color: $color-text-primary;
+      line-height: $line-height-loose;
+      margin-bottom: $spacing-md;
+    }
+
+    .cardSource {
+      font-size: $font-size-sm;
+      color: $color-text-secondary;
+      margin-bottom: $spacing-md;
+    }
+
+    .cardTags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $spacing-xs;
+      margin-bottom: $spacing-md;
+    }
+
+    .cardMeta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: $spacing-md;
+      border-top: 1rpx solid $color-divider;
+
+      .reviewCount {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+  }
+
+  .masterySection {
+    margin-top: $spacing-lg;
+
+    .masteryTitle {
+      font-size: $font-size-md;
+      font-weight: $font-weight-medium;
+      color: $color-text-primary;
+      margin-bottom: $spacing-md;
+      text-align: center;
+    }
+
+    .masteryButtons {
+      display: flex;
+      gap: $spacing-sm;
+    }
+
+    .masteryBtn {
+      flex: 1;
+      padding: $spacing-md $spacing-xs;
+      border-radius: $radius-md;
+      text-align: center;
+      transition: all $transition-base;
+      border: 2rpx solid $color-border;
+      background: $color-bg-card;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &.mastery1 {
+        &.selected, &:active {
+          background: $color-mastery-1;
+          border-color: #fbbf24;
+        }
+      }
+      &.mastery2 {
+        &.selected, &:active {
+          background: $color-mastery-2;
+          border-color: #f59e0b;
+        }
+      }
+      &.mastery3 {
+        &.selected, &:active {
+          background: $color-mastery-3;
+          border-color: #eab308;
+        }
+      }
+      &.mastery4 {
+        &.selected, &:active {
+          background: $color-mastery-4;
+          border-color: #34d399;
+        }
+      }
+      &.mastery5 {
+        &.selected, &:active {
+          background: $color-mastery-5;
+          border-color: #10b981;
+        }
+      }
+
+      .masteryEmoji {
+        font-size: 36rpx;
+        display: block;
+        margin-bottom: $spacing-xs;
+      }
+
+      .masteryLabel {
+        font-size: $font-size-xs;
+        color: $color-text-secondary;
+      }
+    }
+
+    .actionRow {
+      display: flex;
+      gap: $spacing-md;
+      margin-top: $spacing-lg;
+    }
+
+    .navBtn {
+      flex: 1;
+      height: $button-height-md;
+      border-radius: $radius-button;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-xs;
+      font-size: $font-size-md;
+      font-weight: $font-weight-medium;
+      transition: all $transition-base;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &.secondary {
+        background: $color-bg-card;
+        color: $color-text-secondary;
+        box-shadow: $shadow-card;
+      }
+
+      &.primary {
+        background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+        color: $color-text-white;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+      }
+    }
+  }
+}
+
+.completeModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-xl;
+
+  .modalContent {
+    width: 100%;
+    background: $color-bg-card;
+    border-radius: $radius-xl;
+    padding: $spacing-xl * 1.5;
+    text-align: center;
+  }
+
+  .celebrateIcon {
+    font-size: 160rpx;
+    margin-bottom: $spacing-lg;
+  }
+
+  .modalTitle {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .modalSubtitle {
+    font-size: $font-size-md;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-xl;
+  }
+
+  .modalStats {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
+  }
+
+  .modalStat {
+    flex: 1;
+    padding: $spacing-md;
+    background: $color-bg-hover;
+    border-radius: $radius-lg;
+
+    .statNum {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
+      color: $color-primary;
+    }
+
+    .statLabel {
+      font-size: $font-size-xs;
+      color: $color-text-secondary;
+      margin-top: $spacing-xs;
+    }
+  }
+
+  .modalBtn {
+    width: 100%;
+    height: $button-height-lg;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    border-radius: $radius-button;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-white;
+
+    &:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+  }
+}
+
+.randomSection {
+  margin-top: $spacing-xl;
+  padding-top: $spacing-xl;
+  border-top: 1rpx solid $color-divider;
+
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+  }
+
+  .randomCard {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 2rpx dashed $color-primary;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    text-align: center;
+
+    .randomHint {
+      font-size: $font-size-sm;
+      color: $color-text-secondary;
+      margin-bottom: $spacing-md;
+    }
+
+    .randomBtn {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+      padding: $spacing-sm $spacing-lg;
+      background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+      border-radius: $radius-button;
+      font-size: $font-size-md;
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+
+      &:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+      }
+    }
+  }
+}

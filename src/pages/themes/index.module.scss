@@ -1,0 +1,469 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: $spacing-xl;
+}
+
+.tabBar {
+  display: flex;
+  margin: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  padding: $spacing-xs;
+  box-shadow: $shadow-card;
+
+  .tabBtn {
+    flex: 1;
+    height: $button-height-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-xs;
+    border-radius: $radius-button;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    transition: all $transition-base;
+
+    &.active {
+      background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .tabIcon {
+      font-size: $font-size-lg;
+    }
+  }
+}
+
+.content {
+  padding: 0 $spacing-lg;
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+}
+
+.themeCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+  border: 2rpx solid transparent;
+
+  &.active {
+    border-color: $color-primary;
+    transform: scale(1.02);
+    box-shadow: $shadow-card-hover;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .themeHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-md;
+  }
+
+  .themeColor {
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: $radius-md;
+  }
+
+  .themeCount {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    background: $color-bg-hover;
+    padding: 4rpx 12rpx;
+    border-radius: $radius-sm;
+  }
+
+  .themeName {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    @include text-ellipsis;
+  }
+
+  .themeDesc {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: $spacing-xs;
+  }
+}
+
+.addThemeCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  border: 2rpx dashed $color-border;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    border-color: $color-primary;
+  }
+
+  .addIcon {
+    font-size: 48rpx;
+    color: $color-text-tertiary;
+  }
+
+  .addText {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.themeDetail {
+  margin-bottom: $spacing-lg;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  padding: $spacing-lg;
+  border-radius: $radius-lg;
+  margin-bottom: $spacing-md;
+
+  .backBtn {
+    width: 64rpx;
+    height: 64rpx;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-round;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: $spacing-md;
+
+    &:active {
+      transform: scale(0.96);
+    }
+
+    .backIcon {
+      font-size: $font-size-xl;
+      color: $color-text-white;
+    }
+  }
+
+  .detailInfo {
+    flex: 1;
+
+    .detailName {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
+      color: $color-text-white;
+    }
+
+    .detailCount {
+      font-size: $font-size-sm;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: $spacing-xs;
+    }
+  }
+
+  .generateBtn {
+    padding: $spacing-sm $spacing-md;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-button;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+
+    &:active {
+      transform: scale(0.96);
+    }
+
+    .btnIcon {
+      font-size: $font-size-lg;
+    }
+
+    .btnText {
+      font-size: $font-size-sm;
+      color: $color-text-white;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.cardSection {
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-md;
+
+    .sectionTitle {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+    }
+
+    .sectionCount {
+      font-size: $font-size-sm;
+      color: $color-text-tertiary;
+    }
+  }
+}
+
+.favoriteSection {
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-md;
+
+    .sectionTitle {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+    }
+
+    .sectionCount {
+      font-size: $font-size-sm;
+      color: $color-text-tertiary;
+    }
+  }
+
+  .favoriteHint {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-md;
+    line-height: $line-height-loose;
+  }
+}
+
+.notesModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-xl;
+
+  .modalContent {
+    width: 100%;
+    max-height: 80vh;
+    background: $color-bg-card;
+    border-radius: $radius-xl;
+    overflow: hidden;
+  }
+
+  .modalHeader {
+    padding: $spacing-lg;
+    border-bottom: 1rpx solid $color-divider;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .modalTitle {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+    }
+
+    .closeBtn {
+      width: 56rpx;
+      height: 56rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: $color-bg-hover;
+      border-radius: $radius-round;
+      font-size: $font-size-md;
+      color: $color-text-secondary;
+    }
+  }
+
+  .modalBody {
+    padding: $spacing-lg;
+    max-height: 50vh;
+    overflow-y: auto;
+
+    .noteItem {
+      padding: $spacing-md;
+      background: $color-bg-hover;
+      border-radius: $radius-md;
+      margin-bottom: $spacing-md;
+
+      .noteIndex {
+        font-size: $font-size-xs;
+        color: $color-primary;
+        font-weight: $font-weight-medium;
+        margin-bottom: $spacing-xs;
+      }
+
+      .noteContent {
+        font-size: $font-size-sm;
+        color: $color-text-primary;
+        line-height: $line-height-loose;
+      }
+
+      .noteSource {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+        margin-top: $spacing-xs;
+      }
+    }
+  }
+
+  .modalFooter {
+    padding: $spacing-lg;
+    border-top: 1rpx solid $color-divider;
+    display: flex;
+    gap: $spacing-md;
+
+    .modalBtn {
+      flex: 1;
+      height: $button-height-md;
+      border-radius: $radius-button;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: $font-size-md;
+      font-weight: $font-weight-medium;
+      transition: all $transition-base;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &.secondary {
+        background: $color-bg-hover;
+        color: $color-text-secondary;
+      }
+
+      &.primary {
+        background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+        color: $color-text-white;
+      }
+    }
+  }
+}
+
+.newThemeModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-xl;
+
+  .modalContent {
+    width: 100%;
+    background: $color-bg-card;
+    border-radius: $radius-xl;
+    padding: $spacing-xl;
+  }
+
+  .modalTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-lg;
+    text-align: center;
+  }
+
+  .inputLabel {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .nameInput {
+    width: 100%;
+    height: $button-height-md;
+    background: $color-bg-hover;
+    border-radius: $radius-md;
+    padding: 0 $spacing-md;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    margin-bottom: $spacing-lg;
+    box-sizing: border-box;
+  }
+
+  .colorPicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+  }
+
+  .colorOption {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: $radius-round;
+    border: 4rpx solid transparent;
+    transition: all $transition-base;
+
+    &.selected {
+      border-color: $color-text-primary;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  .modalActions {
+    display: flex;
+    gap: $spacing-md;
+
+    .actionBtn {
+      flex: 1;
+      height: $button-height-md;
+      border-radius: $radius-button;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: $font-size-md;
+      font-weight: $font-weight-medium;
+      transition: all $transition-base;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &.cancel {
+        background: $color-bg-hover;
+        color: $color-text-secondary;
+      }
+
+      &.confirm {
+        background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+        color: $color-text-white;
+      }
+    }
+  }
+}
